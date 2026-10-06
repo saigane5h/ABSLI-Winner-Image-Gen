@@ -16,41 +16,30 @@
     ['Sahil Verma', 'Lucknow', 590],
   ].map(([name, location, points]) => ({ name, location, points }));
 
-  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  // Mon–Sun range as "12–18 Oct" (or "29 Sep – 5 Oct" across months). weeksAgo = 0 → current week.
-  function weekRange(weeksAgo) {
-    const now = new Date();
-    const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) - 7 * weeksAgo);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    return mon.getMonth() === sun.getMonth()
-      ? `${mon.getDate()}–${sun.getDate()} ${MONTHS[sun.getMonth()]}`
-      : `${mon.getDate()} ${MONTHS[mon.getMonth()]} – ${sun.getDate()} ${MONTHS[sun.getMonth()]}`;
+  function boardDefaults() {
+    return {
+      eyebrow: 'The Keyword Hunter',
+      title: 'Yesterday’s Top 10',
+      subtitle: 'Ranked by points earned yesterday',
+      pointsLabel: 'points',
+      highlight: 3,
+      entries: SAMPLE.map((e) => ({ ...e })),
+    };
   }
 
-  // Header copy for each popup variant in ABSLI Stream Home
-  const MODES = ['daily', 'weekly', 'winners'];
-  function headerDefaults(mode) {
-    if (mode === 'weekly') {
-      return { eyebrow: 'The Keyword Hunter', title: 'Top 10 Contest Leaders', subtitle: `${weekRange(0)} · ranked by points` };
-    }
-    if (mode === 'winners') {
-      return { eyebrow: 'The Keyword Hunter · Closed', title: 'Top 10 Winners', subtitle: `${weekRange(1)} · final ranking` };
-    }
-    return { eyebrow: 'The Keyword Hunter', title: 'Yesterday’s Top 10', subtitle: 'Ranked by points earned yesterday' };
-  }
-
-  function boardDefaults(mode) {
-    return { ...headerDefaults(mode), pointsLabel: 'points', highlight: 3, entries: SAMPLE.map((e) => ({ ...e })) };
-  }
+  // Older saves kept separate daily/weekly/winners boards — carry over the active one.
+  const normalize = (data) => (data?.boards ? data.boards[data.mode] || data.boards.daily : data);
+  const isBoard = (b) => b && Array.isArray(b.entries);
 
   // ---------- State ----------
-  let state = load() || { mode: 'daily', boards: {} };
-  MODES.forEach((m) => (state.boards[m] ||= boardDefaults(m))); // fill boards missing from older saves
-  const board = () => state.boards[state.mode];
+  let state = load() || boardDefaults();
+  const board = () => state;
 
   function load() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+    try {
+      const b = normalize(JSON.parse(localStorage.getItem(STORAGE_KEY)));
+      return isBoard(b) ? { ...boardDefaults(), ...b } : null;
+    } catch { return null; }
   }
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
@@ -129,7 +118,6 @@
   }
 
   function renderAll() {
-    document.querySelectorAll('.mode-switch button').forEach((btn) => btn.classList.toggle('active', btn.dataset.mode === state.mode));
     renderHeaderFields();
     renderEntries();
     renderCard();
@@ -142,13 +130,8 @@
   }
 
   // ---------- Events ----------
-  document.querySelectorAll('.mode-switch button').forEach((btn) =>
-    btn.addEventListener('click', () => { state.mode = btn.dataset.mode; save(); renderAll(); }));
-
   FIELDS.forEach((f) => $('#f-' + f).addEventListener('input', (ev) => { board()[f] = ev.target.value; commit(); }));
   $('#f-highlight').addEventListener('input', (ev) => { board().highlight = Math.max(0, parseInt(ev.target.value, 10) || 0); commit(); });
-
-  $('#btn-defaults').addEventListener('click', () => { Object.assign(board(), headerDefaults(state.mode)); save(); renderAll(); });
 
   $('#entries').addEventListener('input', (ev) => {
     const row = ev.target.closest('.entry'); if (!row) return;
@@ -199,20 +182,19 @@
 
   $('#btn-sample').addEventListener('click', () => { board().entries = SAMPLE.map((e) => ({ ...e })); commit({ editor: true }); });
   $('#btn-clear').addEventListener('click', () => {
-    if (confirm('Clear all winners from the ' + state.mode + ' list?')) { board().entries = []; commit({ editor: true }); }
+    if (confirm('Clear all winners from the list?')) { board().entries = []; commit({ editor: true }); }
   });
 
   $('#btn-export-json').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    downloadBlob(blob, `keyword-hunter-data-${new Date().toISOString().slice(0, 10)}.json`);
+    downloadBlob(blob, `leaderboard-data-${new Date().toISOString().slice(0, 10)}.json`);
   });
   $('#import-json').addEventListener('change', async (ev) => {
     const file = ev.target.files[0]; if (!file) return;
     try {
-      const data = JSON.parse(await file.text());
-      if (!data.boards?.daily || !data.boards?.weekly) throw new Error('bad shape');
-      MODES.forEach((m) => (data.boards[m] ||= boardDefaults(m)));
-      state = data; save(); renderAll(); toast('Data imported');
+      const data = normalize(JSON.parse(await file.text()));
+      if (!isBoard(data)) throw new Error('bad shape');
+      state = { ...boardDefaults(), ...data }; save(); renderAll(); toast('Data imported');
     } catch { toast('That file is not a valid leaderboard export.'); }
     ev.target.value = '';
   });
@@ -226,9 +208,8 @@
   }
 
   function imageFilename() {
-    const d = new Date();
-    if (state.mode === 'daily') d.setDate(d.getDate() - 1); // daily board shows yesterday
-    return `keyword-hunter-${state.mode}-${d.toISOString().slice(0, 10)}.png`;
+    const slug = state.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'leaderboard';
+    return `${slug}-${new Date().toISOString().slice(0, 10)}.png`;
   }
 
   async function renderPng() {
