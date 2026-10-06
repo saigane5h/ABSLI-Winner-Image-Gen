@@ -216,7 +216,7 @@
     await document.fonts.ready;
     const node = $('#card');
     return htmlToImage.toBlob(node, {
-      pixelRatio: Number($('#scale').value),
+      pixelRatio: 1,
       style: { boxShadow: 'none' },
       cacheBust: true,
     });
