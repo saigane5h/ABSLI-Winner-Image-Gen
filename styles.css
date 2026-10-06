@@ -1,12 +1,12 @@
 :root {
   /* Card palette – tweak here to re-theme the exported image */
-  --red: #c8202b;
-  --red-dark: #9e1520;
-  --maroon: #8b1a1e;
-  --cream: #fdf1d6;
-  --ink: #1f1f1f;
-  --muted: #7a7a7a;
-  --line: #eeeeee;
+  --red: #C7222A;
+  --red-dark: #8B151B;
+  --maroon: #8B151B;
+  --cream: #FFF4D9;
+  --ink: #212529;
+  --muted: #888888;
+  --line: #f0f0f0;
 
   /* Editor UI */
   --ui-bg: #f4f4f6;
@@ -108,40 +108,39 @@ button.link { border: 0; background: none; color: var(--red); padding: 0; font-w
   box-shadow: 0 10px 30px rgba(0,0,0,.15);
   flex-shrink: 0;
 }
+/* Header + rows mirror the leaderboard popup in "ABSLI Stream Home.html" */
 .card-header {
   position: relative; overflow: hidden;
-  padding: 22px 24px 20px;
-  background:
-    radial-gradient(120% 140% at 85% 0%, rgba(255,255,255,.10), transparent 55%),
-    linear-gradient(135deg, var(--red-dark) 0%, var(--red) 100%);
+  padding: 20px 24px;
+  background: linear-gradient(100deg, var(--maroon), var(--red));
   color: #fff;
 }
-.card-header .deco { position: absolute; top: 0; right: 0; width: 220px; height: 112px; pointer-events: none; }
-.card-header > *:not(.deco) { position: relative; }
-.eyebrow { font-size: 12.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #fde9cf; }
-.card-title { font-size: 23px; font-weight: 800; margin-top: 4px; letter-spacing: -.01em; }
-.card-sub { font-size: 13px; margin-top: 4px; opacity: .92; }
+.card-header .banner-art { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.card-header .text { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cream); }
+.card-title { font-size: 22px; font-weight: 700; }
+.card-sub { font-size: 13px; opacity: .9; }
 
-.card-list { padding: 8px 16px 14px; }
+.card-list { padding: 8px 16px 14px; display: flex; flex-direction: column; }
 .lb-row {
-  display: grid; grid-template-columns: 32px 40px 1fr auto; gap: 14px; align-items: center;
+  display: grid; grid-template-columns: 32px 40px minmax(0, 1fr) auto; gap: 14px; align-items: center;
   padding: 9px 10px; border-bottom: 1px solid var(--line);
 }
 .lb-row.top { background: var(--cream); border-radius: 8px; border-bottom: 0; margin-bottom: 4px; }
 .lb-row:last-child { border-bottom: 0; }
 .rank {
   width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; background: var(--cream); color: var(--maroon);
+  font-size: 14px; font-weight: 700; background: var(--cream); color: var(--maroon);
 }
 .lb-row.top .rank { background: var(--red); color: #fff; }
 .avatar {
   width: 40px; height: 40px; border-radius: 50%; background: var(--maroon); color: #fff;
-  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; letter-spacing: .02em;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;
 }
-.who { min-width: 0; }
+.who { min-width: 0; display: flex; flex-direction: column; }
 .who .name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.who .loc { font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pts { text-align: right; padding-right: 2px; }
-.pts .val { font-size: 16px; font-weight: 800; color: var(--red); line-height: 1.1; }
+.who .loc { font-size: 12px; color: #777; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pts { display: flex; flex-direction: column; align-items: flex-end; padding-right: 2px; }
+.pts .val { font-size: 15px; font-weight: 700; color: var(--red); line-height: 1.1; }
 .pts .lbl { font-size: 11px; color: var(--muted); }
 .empty { padding: 30px; text-align: center; color: var(--muted); }

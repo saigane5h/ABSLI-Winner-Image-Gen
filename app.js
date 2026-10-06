@@ -16,30 +16,28 @@
     ['Sahil Verma', 'Lucknow', 590],
   ].map(([name, location, points]) => ({ name, location, points }));
 
-  const fmtDate = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  function lastWeekRange() {
+  // Mon–Sun range as "12–18 Oct" (or "29 Sep – 5 Oct" across months). weeksAgo = 0 → current week.
+  function weekRange(weeksAgo) {
     const now = new Date();
-    const day = (now.getDay() + 6) % 7; // Mon = 0
-    const thisMon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
-    const lastMon = new Date(thisMon); lastMon.setDate(thisMon.getDate() - 7);
-    const lastSun = new Date(thisMon); lastSun.setDate(thisMon.getDate() - 1);
-    return `${fmtDate(lastMon)} – ${fmtDate(lastSun)}`;
+    const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) - 7 * weeksAgo);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return mon.getMonth() === sun.getMonth()
+      ? `${mon.getDate()}–${sun.getDate()} ${MONTHS[sun.getMonth()]}`
+      : `${mon.getDate()} ${MONTHS[mon.getMonth()]} – ${sun.getDate()} ${MONTHS[sun.getMonth()]}`;
   }
 
+  // Header copy for each popup variant in ABSLI Stream Home
+  const MODES = ['daily', 'weekly', 'winners'];
   function headerDefaults(mode) {
     if (mode === 'weekly') {
-      return {
-        eyebrow: 'The Keyword Hunter',
-        title: 'This Week’s Top 10',
-        subtitle: `Ranked by points earned ${lastWeekRange()}`,
-      };
+      return { eyebrow: 'The Keyword Hunter', title: 'Top 10 Contest Leaders', subtitle: `${weekRange(0)} · ranked by points` };
     }
-    return {
-      eyebrow: 'The Keyword Hunter',
-      title: 'Yesterday’s Top 10',
-      subtitle: 'Ranked by points earned yesterday',
-    };
+    if (mode === 'winners') {
+      return { eyebrow: 'The Keyword Hunter · Closed', title: 'Top 10 Winners', subtitle: `${weekRange(1)} · final ranking` };
+    }
+    return { eyebrow: 'The Keyword Hunter', title: 'Yesterday’s Top 10', subtitle: 'Ranked by points earned yesterday' };
   }
 
   function boardDefaults(mode) {
@@ -47,7 +45,8 @@
   }
 
   // ---------- State ----------
-  let state = load() || { mode: 'daily', boards: { daily: boardDefaults('daily'), weekly: boardDefaults('weekly') } };
+  let state = load() || { mode: 'daily', boards: {} };
+  MODES.forEach((m) => (state.boards[m] ||= boardDefaults(m))); // fill boards missing from older saves
   const board = () => state.boards[state.mode];
 
   function load() {
@@ -75,30 +74,6 @@
   }
 
   // ---------- Card rendering ----------
-  const DECO = `
-    <svg class="deco" viewBox="0 0 220 112" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#fff1b8"/><stop offset=".45" stop-color="#e6b34a"/>
-          <stop offset=".75" stop-color="#b9821f"/><stop offset="1" stop-color="#f3d27a"/>
-        </linearGradient>
-      </defs>
-      <path d="M78 -4 C 62 14, 98 22, 82 40 S 96 66, 78 80 S 92 104, 86 116" fill="none" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
-      <path d="M190 -4 C 170 10, 206 22, 186 40 S 204 64, 182 78 S 196 102, 190 116" fill="none" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
-      <path d="M150 -6 C 140 6, 160 14, 150 24" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round" opacity=".85"/>
-      <g fill="#f2c45a">
-        <rect x="18" y="30" width="7" height="3" rx="1" transform="rotate(-25 21 31)"/>
-        <rect x="120" y="22" width="7" height="3" rx="1" transform="rotate(30 123 23)"/>
-        <rect x="140" y="70" width="6" height="3" rx="1" transform="rotate(-40 143 71)"/>
-        <rect x="104" y="92" width="7" height="3" rx="1" transform="rotate(15 107 93)"/>
-        <rect x="206" y="58" width="6" height="3" rx="1" transform="rotate(50 209 59)"/>
-        <rect x="46" y="70" width="6" height="3" rx="1" transform="rotate(-10 49 71)"/>
-      </g>
-      <g fill="#ffd9a0" opacity=".8">
-        <circle cx="160" cy="44" r="1.8"/><circle cx="60" cy="16" r="1.6"/><circle cx="212" cy="20" r="1.6"/>
-      </g>
-    </svg>`;
-
   function renderCard() {
     const b = board();
     const rows = b.entries.map((e, i) => `
@@ -117,10 +92,12 @@
 
     $('#card').innerHTML = `
       <div class="card-header">
-        ${DECO}
-        <div class="eyebrow">${esc(b.eyebrow)}</div>
-        <div class="card-title">${esc(b.title)}</div>
-        <div class="card-sub">${esc(b.subtitle)}</div>
+        ${window.BANNER_SVG || ''}
+        <div class="text">
+          <div class="eyebrow">${esc(b.eyebrow)}</div>
+          <div class="card-title">${esc(b.title)}</div>
+          <div class="card-sub">${esc(b.subtitle)}</div>
+        </div>
       </div>
       <div class="card-list">${rows || '<div class="empty">No winners yet — add some on the left.</div>'}</div>`;
   }
@@ -234,6 +211,7 @@
     try {
       const data = JSON.parse(await file.text());
       if (!data.boards?.daily || !data.boards?.weekly) throw new Error('bad shape');
+      MODES.forEach((m) => (data.boards[m] ||= boardDefaults(m)));
       state = data; save(); renderAll(); toast('Data imported');
     } catch { toast('That file is not a valid leaderboard export.'); }
     ev.target.value = '';
