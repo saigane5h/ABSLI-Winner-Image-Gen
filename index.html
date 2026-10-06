@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Keyword Hunter Leaderboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Keyword Hunter · Leaderboard Maker</div>
+    <div class="mode-switch" role="tablist">
+      <button data-mode="daily" class="active">Daily</button>
+      <button data-mode="weekly">Weekly</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ============ EDITOR ============ -->
+    <section class="editor">
+      <div class="panel">
+        <h2>Header</h2>
+        <label>Eyebrow <input id="f-eyebrow" type="text" /></label>
+        <label>Title <input id="f-title" type="text" /></label>
+        <label>Subtitle <input id="f-subtitle" type="text" /></label>
+        <div class="row-2">
+          <label>Points label <input id="f-pointsLabel" type="text" /></label>
+          <label>Highlight top <input id="f-highlight" type="number" min="0" max="20" /></label>
+        </div>
+        <button class="link" id="btn-defaults">Reset header text to defaults for this mode</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Winners <span id="count" class="muted"></span></h2>
+          <div class="btn-group">
+            <button id="btn-sort" title="Sort highest points first">Sort by points</button>
+            <button id="btn-add">+ Add</button>
+          </div>
+        </div>
+        <div class="entries-head">
+          <span>#</span><span>Name</span><span>Location</span><span>Points</span><span></span>
+        </div>
+        <div id="entries"></div>
+      </div>
+
+      <details class="panel">
+        <summary><h2>Bulk paste from Excel / CSV</h2></summary>
+        <p class="muted">One winner per line: <code>Name, Location, Points</code> (tab-separated rows copied from Excel work too). This replaces the current list.</p>
+        <textarea id="bulk" rows="8" placeholder="Priya Sharma, Mumbai West, 980&#10;Rahul Mehta, Pune Central, 945"></textarea>
+        <label class="check"><input type="checkbox" id="bulk-sort" checked /> Sort by points after import</label>
+        <button id="btn-bulk">Replace list</button>
+      </details>
+
+      <details class="panel">
+        <summary><h2>Data</h2></summary>
+        <div class="btn-group wrap">
+          <button id="btn-export-json">Export JSON</button>
+          <label class="btn">Import JSON <input id="import-json" type="file" accept="application/json" hidden /></label>
+          <button id="btn-sample">Load sample data</button>
+          <button id="btn-clear" class="danger">Clear list</button>
+        </div>
+        <p class="muted">Edits auto-save in this browser. Daily and weekly lists are kept separately.</p>
+      </details>
+    </section>
+
+    <!-- ============ PREVIEW ============ -->
+    <section class="preview-pane">
+      <div class="preview-toolbar">
+        <label>Scale
+          <select id="scale">
+            <option value="1">1x</option>
+            <option value="2" selected>2x</option>
+            <option value="3">3x</option>
+          </select>
+        </label>
+        <button id="btn-copy">Copy image</button>
+        <button id="btn-download" class="primary">Download PNG</button>
+      </div>
+      <div class="stage">
+        <div id="card" class="card"></div>
+      </div>
+      <div id="toast" class="toast" hidden></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
