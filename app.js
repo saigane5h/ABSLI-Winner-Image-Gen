@@ -212,14 +212,45 @@
     return `${slug}-${new Date().toISOString().slice(0, 10)}.png`;
   }
 
+  // Export at 300 DPI while keeping the card's physical size (CSS px are 1/96 inch).
+  const EXPORT_DPI = 300;
+
+  const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  function crc32(bytes) {
+    let c = 0xffffffff;
+    for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+
+  // Insert a pHYs chunk right after IHDR so apps read the PNG as `dpi`.
+  async function setPngDpi(blob, dpi) {
+    const src = new Uint8Array(await blob.arrayBuffer());
+    const ppm = Math.round(dpi / 0.0254);
+    const chunk = new Uint8Array(21);
+    const view = new DataView(chunk.buffer);
+    view.setUint32(0, 9);
+    chunk.set([0x70, 0x48, 0x59, 0x73], 4); // "pHYs"
+    view.setUint32(8, ppm); view.setUint32(12, ppm); chunk[16] = 1; // unit: metre
+    view.setUint32(17, crc32(chunk.subarray(4, 17)));
+    const ihdrEnd = 8 + 25; // signature + IHDR chunk
+    const out = new Uint8Array(src.length + chunk.length);
+    out.set(src.subarray(0, ihdrEnd)); out.set(chunk, ihdrEnd); out.set(src.subarray(ihdrEnd), ihdrEnd + chunk.length);
+    return new Blob([out], { type: 'image/png' });
+  }
+
   async function renderPng() {
     await document.fonts.ready;
     const node = $('#card');
-    return htmlToImage.toBlob(node, {
-      pixelRatio: 1,
+    const blob = await htmlToImage.toBlob(node, {
+      pixelRatio: EXPORT_DPI / 96,
       style: { boxShadow: 'none' },
       cacheBust: true,
     });
+    return setPngDpi(blob, EXPORT_DPI);
   }
 
   $('#btn-download').addEventListener('click', async () => {

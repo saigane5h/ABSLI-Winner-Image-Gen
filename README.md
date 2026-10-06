@@ -17,7 +17,7 @@ Then go to http://localhost:5173.
 1. Type the header text (eyebrow, title, subtitle) for the contest you are announcing.
 2. Edit winners inline, reorder them with ↑/↓, or click **Sort by points**. Avatar initials come from each name.
 3. To load a whole list at once, use **Bulk paste**: copy the Name / Location / Points columns from Excel and paste them in.
-4. Click **Download PNG** (520px wide) or **Copy image** to paste straight into WhatsApp, Slack or email.
+4. Click **Download PNG** (300 DPI, same physical size as the preview) or **Copy image** to paste straight into WhatsApp, Slack or email.
 
 Your edits auto-save in the browser's localStorage. Use **Export JSON / Import JSON** to back them up or move them to another machine.
 
